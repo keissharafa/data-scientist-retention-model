@@ -71,3 +71,25 @@ for col in kolom_numerik:
     df[col] = np.where(df[col] > batas_atas, batas_atas, df[col])
 
 print("\nSTATUS: Preprocessing Selesai! Data siap untuk tahap Split Data.")
+
+# ==============================================================================
+# STEP 3: DATA ENCODING & SPLIT DATA
+# ==============================================================================
+print("\n=== STEP 3: ENCODING & SPLIT DATA ===")
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+
+# 3.1 Label Encoding (Mengubah teks menjadi angka agar bisa diproses algoritma)
+le = LabelEncoder()
+for col in kolom_kategori:
+    df[col] = le.fit_transform(df[col])
+
+# 3.2 Memisahkan Fitur (X) dan Target (y)
+X = df.drop(columns=['target'])
+y = df['target']
+
+# 3.3 Split Data: 80% Data Training dan 20% Data Testing
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=42)
+
+print(f"Jumlah Data Training (80%): {len(X_train)} baris")
+print(f"Jumlah Data Testing (20%): {len(X_test)} baris")
