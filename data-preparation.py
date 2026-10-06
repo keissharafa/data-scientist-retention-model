@@ -93,3 +93,21 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random
 
 print(f"Jumlah Data Training (80%): {len(X_train)} baris")
 print(f"Jumlah Data Testing (20%): {len(X_test)} baris")
+
+# ==============================================================================
+# STEP 4: TRANSFORMASI (MIN-MAX SCALING)
+# ==============================================================================
+print("\n=== STEP 4: TRANSFORMASI MIN-MAX ===")
+from sklearn.preprocessing import MinMaxScaler
+
+# Membuat objek Min-Max Scaler
+scaler = MinMaxScaler()
+
+# 4.1 Menerapkan pada Data Training (Fit & Transform)
+X_train[kolom_numerik] = scaler.fit_transform(X_train[kolom_numerik])
+
+# 4.2 Menerapkan pada Data Testing (HANYA Transform, tanpa Fit)
+X_test[kolom_numerik] = scaler.transform(X_test[kolom_numerik])
+
+print("Data Training Numerik (setelah Min-Max):")
+print(X_train[kolom_numerik].head(3))
