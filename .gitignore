@@ -1,0 +1,57 @@
+# ============================================
+# Python Environment & Cache
+# ============================================
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# ============================================
+# IDE / Editor
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ============================================
+# Notebook
+# ============================================
+.ipynb_checkpoints/
+
+# ============================================
+# Data (Generated / Processed)
+# ============================================
+data/interim/
+data/processed/
+
+
+
+# ============================================
+# Node.js / npm (tidak relevan untuk Python)
+# ============================================
+node_modules/
+package-lock.json
+package.json
+
+# ============================================
+# Reports & Docs (Generated)
+# ============================================
+docs/
+*.zip
+*.log
+
+
+# ============================================
+# Keep raw data (committed) — add pattern if needed
+# ============================================
+# *.csv        ← uncomment if you DON'T want to track any CSV
