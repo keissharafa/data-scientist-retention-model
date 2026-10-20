@@ -5,24 +5,30 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report, confusion_matrix
 
-def evaluate_naive_bayes(test_csv='data/processed/data_testing_siap.csv', model_path='assets/naive_bayes_model.pkl'):
-    print("=== STEP 6 (NB): EVALUASI NAÏVE BAYES ===")
+def evaluate_model(test_csv='data/processed/data_testing_siap.csv', model_path='assets/model.pkl'):
+    # ==============================================================================
+    # STEP 6: EVALUASI MODEL & CONFUSION MATRIX
+    # ==============================================================================
+    print("=== STEP 6: EVALUASI MODEL ===")
 
     if not os.path.exists(test_csv) or not os.path.exists(model_path):
-        raise FileNotFoundError("File data testing atau naive_bayes_model.pkl tidak ditemukan!")
+        raise FileNotFoundError("File data_testing_siap.csv atau model.pkl tidak ditemukan!")
 
     df_test = pd.read_csv(test_csv)
     X_test = df_test.drop(columns=['target'])
     y_test = df_test['target']
 
-    # --- Load Model Naïve Bayes ---
+    # --- Load Model ---
     with open(model_path, 'rb') as f:
-        nb_model = pickle.load(f)
+        decision_tree = pickle.load(f)
 
-    # --- Prediksi Naïve Bayes ---
-    Y_pred = nb_model.predict(X_test)
+    # --- Prediksi Decision Tree ---
+    print("instance prediksi decision tree:")
+    Y_pred = decision_tree.predict(X_test)
+    print(Y_pred)
+    print("=" * 75)
 
-    # --- Hitung Metrik Evaluasi ---
+    # --- Hitung Prediksi Akurasi (Sesuai Modul 7) ---
     accuracy = round(accuracy_score(y_test, Y_pred) * 100, 2)
     precision = round(precision_score(y_test, Y_pred, average='weighted') * 100, 2)
     recall = round(recall_score(y_test, Y_pred, average='weighted') * 100, 2)
@@ -33,24 +39,26 @@ def evaluate_naive_bayes(test_csv='data/processed/data_testing_siap.csv', model_
     print(f"Recall    : {recall}%")
     print(f"F1-Score  : {f1}%\n")
 
-    print("CLASSIFICATION REPORT NAÏVE BAYES".center(75, '='))
+    # --- Display Classification Report & Confusion Matrix (Sesuai Modul 7) ---
+    print("CLASSIFICATION REPORT DECISION TREE".center(75, '='))
     print(classification_report(y_test, Y_pred))
 
-    # --- Visualisasi Heatmap Confusion Matrix ---
     cm = confusion_matrix(y_test, Y_pred)
-    
+    print("Confusion Matrix:")
+    print(cm)
+
+    # --- Visualisasi Heatmap Confusion Matrix ---
     plt.figure(figsize=(6, 4))
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
-    plt.title('Confusion Matrix - Naïve Bayes')
+    plt.title('Confusion Matrix - Decision Tree')
     plt.xlabel('Predicted Label')
     plt.ylabel('True Label')
     plt.tight_layout()
 
-    # nyimpan grafik
     os.makedirs('assets', exist_ok=True)
-    plt.savefig('assets/confusion_matrix_nb.png')
-    print("\nSTATUS: Grafik Confusion Matrix disimpan di 'assets/confusion_matrix_nb.png'.")
+    plt.savefig('assets/confusion_matrix.png')
+    print("\nSTATUS: Grafik Confusion Matrix disimpan di 'assets/confusion_matrix.png'.")
     plt.show()
 
 if __name__ == '__main__':
-    evaluate_naive_bayes()
+    evaluate_model()
