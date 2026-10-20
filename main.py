@@ -4,6 +4,9 @@ from src.preparation.transformation import run_transformation
 from src.preparation.selection import run_feature_selection
 from src.modeling.train import train_model
 from src.modeling.evaluate import evaluate_model
+from src.modeling.svm.train import train_model_svm
+from src.modeling.svm.evaluate import evaluate_model_svm
+from src.modeling.n
 
 if __name__ == '__main__':
     print("=" * 75)
