@@ -84,10 +84,35 @@ Atau jalankan setiap tahap secara terpisah:
 | 2. Split Data    | `python3 src/preparation/splitter.py`      |
 | 3. Transformasi  | (dipanggil dari`main.py`)                  |
 | 4. Seleksi Fitur | (dipanggil dari`main.py`)                  |
-| 5. Training      | `python3 src/modeling/train.py`            |
-| 6. Evaluasi      | `python3 src/modeling/evaluate.py`         |
+| 5. Training DT   | `python3 src/modeling/decision_tree/train.py`   |
+| 6. Evaluasi DT   | `python3 src/modeling/decision_tree/evaluate.py` |
+| 7. Training SVM  | `python3 src/modeling/svm/train.py`             |
+| 8. Evaluasi SVM  | `python3 src/modeling/svm/evaluate.py`          |
+| 9. Training NB   | `python3 src/modeling/naive_bayes/train.py`     |
+| 10. Evaluasi NB  | `python3 src/modeling/naive_bayes/evaluate.py`  |
+| 11. Perbandingan | `python3 -m src.modeling.comparison`         |
 
-> **Catatan**: Tahap 3–4 membutuhkan output dari tahap sebelumnya, jadi jalankan melalui `main.py`.
+> **Catatan**: Tahap 3–4 membutuhkan output dari tahap sebelumnya, jadi jalankan melalui `main.py`. Tahap 5–11 juga bergantung pada `data/processed/` yang dihasilkan tahap 4.
+>
+> Tahap 11 menghasilkan 5 grafik perbandingan di `assets/comparison/`. Tahap ini **read-only** terhadap model — tidak menimpa `.pkl` yang sudah ada — tetapi melatih ulang tiap model untuk mengukur waktu training.
+
+### Visualisasi Perbandingan Model
+
+Untuk melihat perbandingan langsung di browser, buka tab **Model Comparison** pada aplikasi Streamlit (`streamlit run app.py`). Tab tersebut menampilkan metrik ringkas dan kelima grafik pembanding.
+
+---
+
+## 🖥️ Menjalankan Aplikasi Web (Deployment)
+
+Setelah pipeline selesai dan artefak model tersedia di `assets/`, jalankan aplikasi inferensi:
+
+```bash
+streamlit run app.py
+```
+
+Aplikasi akan terbuka otomatis di browser pada `http://localhost:8501`. Anda dapat mengisi profil kandidat melalui formulir dan menekan tombol **Analyze Candidate ✨** untuk melihat hasil prediksi.
+
+> **Catatan**: `app.py` memuat `assets/model_svm.pkl` — yaitu model dengan kinerja terbaik hasil perbandingan pada `main.py`. Pastikan pipeline sudah dijalankan minimal sekali sebelum membuka aplikasi.
 
 ### Deaktivasi Virtual Environment
 
@@ -115,49 +140,86 @@ Proyek ini dikerjakan melalui pendekatan terstruktur yang dibagi menjadi dua fas
 | ----------------------- | ------------------------------------------------------------------------------------ |
 | **Preprocessing** | Deteksi & handling duplikat, missing value (Modus/Median), dan outlier (IQR Capping) |
 | **Encoding**      | Konversi data kategorikal ke numerik menggunakan LabelEncoder                        |
-| **Split Data**    | Pemisahan 80% Training, 20% Testing dengan stratifikasi                              |
+| **Split Data**    | Pemisahan 80% Training, 20% Testing (`random_state=42`)                              |
 | **Transformasi**  | Normalisasi fitur numerik menggunakan Min-Max Scaling                                |
 | **Seleksi Fitur** | Uji Chi-Square (kategorikal) & T-test (numerik) untuk memilih fitur signifikan       |
 
 ### Fase 2: Modeling & Evaluation
 
-| Tahap              | Keterangan                                           |
+| Tahap | Keterangan |
 | ------------------ | ---------------------------------------------------- |
-| **Modeling** | Klasifikasi menggunakan Decision Tree Classifier     |
-| **Evaluasi** | Confusion Matrix, Akurasi, Presisi, Recall, F1-Score |
+| **Modeling** | Klasifikasi komparatif 3 algoritma: Decision Tree, Support Vector Machine (SVM), dan Gaussian Naïve Bayes |
+| **Evaluasi** | Confusion Matrix, Akurasi, Presisi, Recall, F1-Score untuk setiap model |
+| **Perbandingan Visual** | 5 grafik pembanding model: bar chart metrik, grid confusion matrix, kurva ROC, radar chart, dan trade-off efisiensi |
+| **Deployment** | Aplikasi web inferensi (`app.py`) berbasis Streamlit dengan tema UI Glassmorphism |
+
+### Hasil Perbandingan Model
+
+Evaluasi pada 3.822 data test (20% hold-out):
+
+| Model | Accuracy | Precision | Recall | F1-Score | ROC-AUC | Waktu Training |
+| ------------------ | -------: | --------: | -----: | -------: | ------: | -------------: |
+| Decision Tree | 69.99% | 70.07% | 69.99% | 70.03% | 60.72% | 0.09 s |
+| **SVM** | **77.32%** | **75.17%** | **77.32%** | **75.63%** | **71.58%** | 9.73 s |
+| Naïve Bayes | 74.02% | 73.67% | 74.02% | 73.84% | 71.20% | 0.01 s |
+
+**Insight**: SVM unggul di seluruh metrik (model yang di-deploy), sementara Naïve Bayes memberi performa mendekati SVM dengan waktu training ~1000x lebih cepat — pilihan tepat bila biaya komputasi menjadi kendala. Decision Tree paling lemah karena overfitting pada data training.
 
 ---
 
 ## 📂 Struktur Proyek
 
+Hanya berkas yang di-*track* Git yang ditampilkan di bawah ini:
+
 ```
 .
 ├── .gitignore               # Aturan file yang tidak di-track Git
-├── .venv/                    # Virtual environment (tidak di-track)
+├── README.md                # Dokumentasi proyek
 ├── requirements.txt         # Daftar dependensi Python
-├── README.md
 ├── main.py                  # Entry point pipeline end-to-end
-├── assets/                  # Model & artifacts (tidak di-track)
-│   ├── model.pkl
-│   ├── scaler.pkl
-│   ├── encoders.pkl
-│   ├── selected_features.json
-│   └── confusion_matrix.png
+├── app.py                   # Aplikasi Streamlit (deployment model terbaik)
+├── assets/                  # Model terlatih & artefak visualisasi
+│   ├── model.pkl                    # Decision Tree terlatih
+│   ├── model_svm.pkl                # SVM terlatih (= model yang di-deploy)
+│   ├── naive_bayes_model.pkl        # Naïve Bayes terlatih
+│   ├── scaler.pkl                   # MinMaxScaler terlatih
+│   ├── encoders.pkl                 # LabelEncoder per kolom
+│   ├── selected_features.json       # Daftar 9 fitur terpilih
+│   ├── confusion_matrix.png         # Confusion Matrix Decision Tree
+│   ├── confusion_matrix_svm.png     # Confusion Matrix SVM
+│   ├── confusion_matrix_nb.png      # Confusion Matrix Naïve Bayes
+│   ├── decision_tree_depth3.png     # Visualisasi pohon (depth 3)
+│   ├── decision_tree_depth5.png     # Visualisasi pohon (depth 5)
+│   ├── feature_importance.png       # Feature importance Decision Tree
+│   └── comparison/                  # 5 grafik perbandingan antar model
+│       ├── comparison_metrics.png       # Grouped bar chart 5 metrik
+│       ├── comparison_confusion.png     # Grid 3 confusion matrix
+│       ├── comparison_roc.png           # Kurva ROC bertumpuk
+│       ├── comparison_radar.png         # Radar chart multidimensi
+│       └── comparison_efficiency.png    # Trade-off akurasi vs waktu training
 ├── data/
-│   ├── raw/                 # Dataset mentah (di-track)
-│   │   └── aug_train.csv
-│   ├── interim/             # Data setelah preprocessing (tidak di-track)
-│   └── processed/           # Data siap modeling (tidak di-track)
-├── src/
-│   ├── preparation/
-│   │   ├── preprocessing.py
-│   │   ├── splitter.py
-│   │   ├── transformation.py
-│   │   └── selection.py
-│   └── modeling/
-│       ├── train.py
-│       └── evaluate.py
+│   └── raw/                 # Dataset mentah (di-track)
+│       └── aug_train.csv
+└── src/
+    ├── preparation/
+    │   ├── preprocessing.py     # Duplikat, missing value, outlier (IQR Capping)
+    │   ├── splitter.py          # Label Encoding & split 80/20
+    │   ├── transformation.py    # Min-Max Scaling
+    │   └── selection.py         # Seleksi fitur (Chi-Square & T-test)
+    └── modeling/
+        ├── decision_tree/
+        │   ├── train.py         # Training Decision Tree
+        │   └── evaluate.py      # Evaluasi Decision Tree
+        ├── svm/
+        │   ├── train.py         # Training SVM
+        │   └── evaluate.py      # Evaluasi SVM
+        ├── naive_bayes/
+        │   ├── train.py         # Training Naïve Bayes
+        │   └── evaluate.py      # Evaluasi Naïve Bayes
+        └── comparison.py        # Perbandingan visual 3 model (5 grafik)
 ```
+
+> **Catatan**: Direktori `data/interim/`, `data/processed/`, dan `.venv/` tidak ditampilkan karena di-*ignore* oleh `.gitignore`. Ketiga direktori `data/` tersebut dibuat otomatis saat `main.py` dijalankan. Artefak di `assets/` di-*track* Git agar model dapat langsung dipakai untuk inferensi melalui `app.py` tanpa perlu melatih ulang.
 
 ---
 
@@ -170,7 +232,8 @@ Proyek ini dikerjakan melalui pendekatan terstruktur yang dibagi menjadi dua fas
 | **Scikit-Learn**         | Machine Learning (preprocessing, model, evaluasi) |
 | **SciPy**                | Uji statistik (Chi-Square, T-test)                |
 | **Matplotlib & Seaborn** | Visualisasi Confusion Matrix                      |
-| **imbalanced-learn**     | Resampling untuk data tidak seimbang              |
+| **Streamlit**            | Deployment model sebagai aplikasi web interaktif  |
+| **imbalanced-learn**     | Resampling untuk data tidak seimbang (opsional)   |
 
 ---
 

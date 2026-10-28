@@ -15,6 +15,9 @@ from src.modeling.svm.evaluate import evaluate_model_svm
 from src.modeling.naive_bayes.train import train_naive_bayes
 from src.modeling.naive_bayes.evaluate import evaluate_naive_bayes
 
+# 4. Perbandingan visual antar model
+from src.modeling.comparison import run_comparison
+
 if __name__ == '__main__':
     print("=" * 75)
     print("RUNNING END-TO-END MACHINE LEARNING PIPELINE".center(75))
@@ -51,6 +54,14 @@ if __name__ == '__main__':
     print("#" * 75 + "\n")
     train_naive_bayes()
     evaluate_naive_bayes()
+
+    # --------------------------------------------------------------------------
+    # FASE 3: PERBANDINGAN VISUAL ANTAR MODEL
+    # --------------------------------------------------------------------------
+    print("\n" + "#" * 75)
+    print(" PERBANDINGAN MODEL: DT vs SVM vs NAÏVE BAYES ".center(75, '#'))
+    print("#" * 75 + "\n")
+    run_comparison()
 
     print("=" * 75)
     print("ALL PIPELINE STAGES COMPLETED SUCCESSFULLY!".center(75))
