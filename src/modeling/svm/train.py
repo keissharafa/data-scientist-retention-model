@@ -18,13 +18,11 @@ def train_model_svm(train_csv='data/processed/data_training_siap.csv'):
     y_train = df_train['target']
 
     # --- Inisialisasi & Training Model ---
-    # Menggunakan SVC() sesuai instruksi di PDF Pertemuan 8
     svm_model = SVC(random_state=0) 
     svm_model.fit(X_train, y_train)
 
     print("STATUS: Pemodelan SVM selesai dilatih.")
 
-    # Simpan hasil model (otak AI) ke folder assets dengan nama berbeda
     os.makedirs('assets', exist_ok=True)
     with open('assets/model_svm.pkl', 'wb') as f:
         pickle.dump(svm_model, f)

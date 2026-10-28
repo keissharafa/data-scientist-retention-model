@@ -90,8 +90,15 @@ Atau jalankan setiap tahap secara terpisah:
 | 8. Evaluasi SVM  | `python3 src/modeling/svm/evaluate.py`          |
 | 9. Training NB   | `python3 src/modeling/naive_bayes/train.py`     |
 | 10. Evaluasi NB  | `python3 src/modeling/naive_bayes/evaluate.py`  |
+| 11. Perbandingan | `python3 -m src.modeling.comparison`         |
 
-> **Catatan**: Tahap 3–4 membutuhkan output dari tahap sebelumnya, jadi jalankan melalui `main.py`. Tahap 5–10 juga bergantung pada `data/processed/` yang dihasilkan tahap 4.
+> **Catatan**: Tahap 3–4 membutuhkan output dari tahap sebelumnya, jadi jalankan melalui `main.py`. Tahap 5–11 juga bergantung pada `data/processed/` yang dihasilkan tahap 4.
+>
+> Tahap 11 menghasilkan 5 grafik perbandingan di `assets/comparison/`. Tahap ini **read-only** terhadap model — tidak menimpa `.pkl` yang sudah ada — tetapi melatih ulang tiap model untuk mengukur waktu training.
+
+### Visualisasi Perbandingan Model
+
+Untuk melihat perbandingan langsung di browser, buka tab **Model Comparison** pada aplikasi Streamlit (`streamlit run app.py`). Tab tersebut menampilkan metrik ringkas dan kelima grafik pembanding.
 
 ---
 
@@ -143,7 +150,20 @@ Proyek ini dikerjakan melalui pendekatan terstruktur yang dibagi menjadi dua fas
 | ------------------ | ---------------------------------------------------- |
 | **Modeling** | Klasifikasi komparatif 3 algoritma: Decision Tree, Support Vector Machine (SVM), dan Gaussian Naïve Bayes |
 | **Evaluasi** | Confusion Matrix, Akurasi, Presisi, Recall, F1-Score untuk setiap model |
+| **Perbandingan Visual** | 5 grafik pembanding model: bar chart metrik, grid confusion matrix, kurva ROC, radar chart, dan trade-off efisiensi |
 | **Deployment** | Aplikasi web inferensi (`app.py`) berbasis Streamlit dengan tema UI Glassmorphism |
+
+### Hasil Perbandingan Model
+
+Evaluasi pada 3.822 data test (20% hold-out):
+
+| Model | Accuracy | Precision | Recall | F1-Score | ROC-AUC | Waktu Training |
+| ------------------ | -------: | --------: | -----: | -------: | ------: | -------------: |
+| Decision Tree | 69.99% | 70.07% | 69.99% | 70.03% | 60.72% | 0.09 s |
+| **SVM** | **77.32%** | **75.17%** | **77.32%** | **75.63%** | **71.58%** | 9.73 s |
+| Naïve Bayes | 74.02% | 73.67% | 74.02% | 73.84% | 71.20% | 0.01 s |
+
+**Insight**: SVM unggul di seluruh metrik (model yang di-deploy), sementara Naïve Bayes memberi performa mendekati SVM dengan waktu training ~1000x lebih cepat — pilihan tepat bila biaya komputasi menjadi kendala. Decision Tree paling lemah karena overfitting pada data training.
 
 ---
 
@@ -170,7 +190,13 @@ Hanya berkas yang di-*track* Git yang ditampilkan di bawah ini:
 │   ├── confusion_matrix_nb.png      # Confusion Matrix Naïve Bayes
 │   ├── decision_tree_depth3.png     # Visualisasi pohon (depth 3)
 │   ├── decision_tree_depth5.png     # Visualisasi pohon (depth 5)
-│   └── feature_importance.png       # Feature importance Decision Tree
+│   ├── feature_importance.png       # Feature importance Decision Tree
+│   └── comparison/                  # 5 grafik perbandingan antar model
+│       ├── comparison_metrics.png       # Grouped bar chart 5 metrik
+│       ├── comparison_confusion.png     # Grid 3 confusion matrix
+│       ├── comparison_roc.png           # Kurva ROC bertumpuk
+│       ├── comparison_radar.png         # Radar chart multidimensi
+│       └── comparison_efficiency.png    # Trade-off akurasi vs waktu training
 ├── data/
 │   └── raw/                 # Dataset mentah (di-track)
 │       └── aug_train.csv
@@ -187,9 +213,10 @@ Hanya berkas yang di-*track* Git yang ditampilkan di bawah ini:
         ├── svm/
         │   ├── train.py         # Training SVM
         │   └── evaluate.py      # Evaluasi SVM
-        └── naive_bayes/
-            ├── train.py         # Training Naïve Bayes
-            └── evaluate.py      # Evaluasi Naïve Bayes
+        ├── naive_bayes/
+        │   ├── train.py         # Training Naïve Bayes
+        │   └── evaluate.py      # Evaluasi Naïve Bayes
+        └── comparison.py        # Perbandingan visual 3 model (5 grafik)
 ```
 
 > **Catatan**: Direktori `data/interim/`, `data/processed/`, dan `.venv/` tidak ditampilkan karena di-*ignore* oleh `.gitignore`. Ketiga direktori `data/` tersebut dibuat otomatis saat `main.py` dijalankan. Artefak di `assets/` di-*track* Git agar model dapat langsung dipakai untuk inferensi melalui `app.py` tanpa perlu melatih ulang.

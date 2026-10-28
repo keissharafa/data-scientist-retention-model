@@ -400,6 +400,29 @@ OPTIONS = {
     "major_discipline": ["STEM", "Humanities", "Other", "Business Degree", "Arts", "No Major"]
 }
 
+# --- VISUALISASI PERBANDINGAN MODEL ---
+COMPARISON_DIR = os.path.join('assets', 'comparison')
+COMPARISON_IMAGES = [
+    ("comparison_metrics.png", "Perbandingan 5 Metrik Evaluasi",
+     "Grouped bar chart akurasi, presisi, recall, F1-score, dan ROC-AUC tiap model."),
+    ("comparison_confusion.png", "Confusion Matrix Berdampingan",
+     "Perbandingan sebaran True/False Positive & Negative antar model."),
+    ("comparison_roc.png", "Kurva ROC-AUC",
+     "Kemampuan diskriminasi tiap model pada seluruh threshold."),
+    ("comparison_radar.png", "Radar Performa Multidimensi",
+     "Semakin lebar area terisi, semakin seimbang performa model."),
+    ("comparison_efficiency.png", "Trade-off Akurasi vs Waktu Training",
+     "Keseimbangan antara kualitas prediksi dan biaya komputasi."),
+]
+
+# Angka diambil dari output `python -m src.modeling.comparison` (test set 3.822 baris)
+COMPARISON_SCORES = {
+    "Decision Tree": {"accuracy": 69.99, "precision": 70.07, "recall": 69.99, "f1": 70.03, "auc": 60.72},
+    "SVM": {"accuracy": 77.32, "precision": 75.17, "recall": 77.32, "f1": 75.63, "auc": 71.58},
+    "Naïve Bayes": {"accuracy": 74.02, "precision": 73.67, "recall": 74.02, "f1": 73.84, "auc": 71.20},
+}
+
+
 @st.cache_resource
 def build_string_encoders():
     string_encoders = {}
@@ -528,7 +551,7 @@ def main():
         return
 
     # --- IMPLEMENTASI CAPSULE TABS ---
-    tab1, tab2 = st.tabs(["Dashboard", "Model Progress"])
+    tab1, tab2, tab3 = st.tabs(["Dashboard", "Model Comparison", "Model Progress"])
 
     with tab1:
         # --- IMPLEMENTASI METRIC CARDS ---
@@ -625,6 +648,33 @@ def main():
                 st.error(f"Terjadi kesalahan pemrosesan: {e}")
 
     with tab2:
+        st.subheader("Perbandingan Model: Decision Tree vs SVM vs Naïve Bayes")
+        st.markdown(
+            "Evaluasi pada **3.822 data test** (20% hold-out) dengan 9 fitur terpilih. "
+            "Semua model dilatih pada data training yang sama agar perbandingan adil."
+        )
+
+        cols = st.columns(3)
+        for col, (name, s) in zip(cols, COMPARISON_SCORES.items()):
+            is_best = s["accuracy"] == max(v["accuracy"] for v in COMPARISON_SCORES.values())
+            col.metric(f"{name} · Accuracy", f"{s['accuracy']:.2f}%", "Terbaik" if is_best else None)
+
+        if not os.path.isdir(COMPARISON_DIR):
+            st.warning(
+                "Grafik perbandingan belum tersedia. Jalankan:\n\n"
+                "`python -m src.modeling.comparison`"
+            )
+        else:
+            for filename, title, caption in COMPARISON_IMAGES:
+                path = os.path.join(COMPARISON_DIR, filename)
+                if not os.path.exists(path):
+                    continue
+                st.divider()
+                st.markdown(f"#### {title}")
+                st.caption(caption)
+                st.image(path, use_container_width=True)
+
+    with tab3:
         st.subheader("Model Feature Importance (Simulation)")
         st.markdown("Berikut adalah simulasi visualisasi kontribusi setiap fitur.")
         
