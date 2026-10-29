@@ -1,11 +1,13 @@
 import os
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 
 def evaluate_model(model_name, model, X_train, y_train, X_test, y_test):
     print(f"Melatih model {model_name} (Versi ORI - 12 Fitur Utuh)...")
@@ -16,6 +18,30 @@ def evaluate_model(model_name, model, X_train, y_train, X_test, y_test):
     prec = precision_score(y_test, y_pred, zero_division=0)
     rec = recall_score(y_test, y_pred, zero_division=0)
     f1 = f1_score(y_test, y_pred, zero_division=0)
+    
+    # ========================================================
+    # GENERATE & SAVE CONFUSION MATRIX (.PNG)
+    # ========================================================
+    cm = confusion_matrix(y_test, y_pred)
+    plt.figure(figsize=(6,4))
+    
+    # Sengaja pakai cmap='Reds' atau 'Oranges' supaya beda visual dari Modul 8
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Reds') 
+    plt.title(f'Confusion Matrix {model_name}\n(Versi ORI - 12 Fitur)')
+    plt.xlabel('Predicted Label')
+    plt.ylabel('True Label')
+    plt.tight_layout()
+    
+    os.makedirs('assets/ori', exist_ok=True)
+    
+    # Bersihkan nama file dari spasi atau kurung (misal: "SVM (Linear)" -> "svm_linear")
+    safe_name = model_name.replace(" ", "_").replace("(", "").replace(")", "").lower()
+    filepath = f'assets/ori/cm_{safe_name}.png'
+    
+    plt.savefig(filepath)
+    plt.close() 
+    print(f"-> Grafik disimpan di: {filepath}")
+    # ========================================================
     
     return [model_name, acc, prec, rec, f1]
 
@@ -30,22 +56,21 @@ def run_baseline_ori():
         print("ERROR: File 'data/interim/cleaned_data.csv' tidak ditemukan.")
         return
 
-    # 2. ENCODING (Meniru splitter.py)
+    # 2. ENCODING
     kolom_kategori = df.select_dtypes(include=['object']).columns.tolist()
     le = LabelEncoder()
     for col in kolom_kategori:
         df[col] = le.fit_transform(df[col])
         
-    # 3. SPLIT DATA (Meniru splitter.py)
+    # 3. SPLIT DATA
     X = df.drop(columns=['target'])
     y = df['target']
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=42)
 
-    # 4. SCALING MIN-MAX (Meniru transformation.py)
+    # 4. SCALING MIN-MAX
     kolom_numerik = X_train.select_dtypes(include=['int64', 'float64']).columns.tolist()
     scaler = MinMaxScaler()
     
-    # Copy agar tidak ada warning pandas
     X_train_scaled = X_train.copy()
     X_test_scaled = X_test.copy()
     
@@ -72,7 +97,6 @@ def run_baseline_ori():
     print("=========================================================")
     df_results = pd.DataFrame(results, columns=["Model", "Accuracy", "Precision", "Recall", "F1-Score"])
     
-    # Format persentase
     for col in ["Accuracy", "Precision", "Recall", "F1-Score"]:
         df_results[col] = (df_results[col] * 100).round(2).astype(str) + "%"
         
