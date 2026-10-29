@@ -1,68 +1,47 @@
-from src.preparation.preprocessing import run_preprocessing
-from src.preparation.splitter import run_splitting
-from src.preparation.transformation import run_transformation
-from src.preparation.selection import run_feature_selection
+import sys
+import os
 
-# 1. Decision Tree
-from src.modeling.decision_tree.train import train_model
-from src.modeling.decision_tree.evaluate import evaluate_model
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
 
-# 2. Support Vector Machine (SVM)
-from src.modeling.svm.train import train_model_svm
-from src.modeling.svm.evaluate import evaluate_model_svm
+from preparation.preprocessing import run_preprocessing
+from preparation.splitter import run_splitting
+from preparation.selection_cstt import run_selection_ttest
+from preparation.selection_csanv import run_selection_anova
 
-# 3. Naïve Bayes
-from src.modeling.naive_bayes.train import train_naive_bayes
-from src.modeling.naive_bayes.evaluate import evaluate_naive_bayes
+from modeling.decision_tree.train import train_model as train_dt
+from modeling.svm.train import train_model_svm as train_svm
+from modeling.naive_bayes.train import train_naive_bayes as train_nb
 
-# 4. Perbandingan visual antar model
-from src.modeling.comparison import run_comparison
+from modeling.comparison import run_comparison
 
-if __name__ == '__main__':
-    print("=" * 75)
-    print("RUNNING END-TO-END MACHINE LEARNING PIPELINE".center(75))
-    print("=" * 75 + "\n")
+def main():
+    print("==========================================================")
+    print("      PIPELINE KLASIFIKASI 9 KOMBINASI EKSPERIMEN         ")
+    print("==========================================================\n")
 
-    # --------------------------------------------------------------------------
-    # FASE 1: PREPARATION & PREPROCESSING DATA
-    # --------------------------------------------------------------------------
+    # 1. Preparation
     run_preprocessing()
-    X_train, X_test, y_train, y_test = run_splitting()
-    X_train_scaled, X_test_scaled = run_transformation(X_train, X_test)
-    run_feature_selection(X_train_scaled, X_test_scaled, y_train, y_test)
+    X_tr, X_te, y_tr, y_te = run_splitting()
+    run_selection_ttest(X_tr, X_te, y_tr, y_te)
+    run_selection_anova(X_tr, X_te, y_tr, y_te)
 
-    # --------------------------------------------------------------------------
-    # FASE 2: MODELING & EVALUASI BENCHMARK
-    # --------------------------------------------------------------------------
-    # 1. Decision Tree
-    print("\n" + "#" * 75)
-    print(" MODEL 1: DECISION TREE ".center(75, '#'))
-    print("#" * 75 + "\n")
-    train_model()
-    evaluate_model()
+    # 2. Training Decision Tree (3 Varian)
+    train_dt('data/processed/data_training_ori.csv', 'assets/decision_tree/model_dt_ori.pkl', 'ORI')
+    train_dt('data/processed/data_training_cstt.csv', 'assets/decision_tree/model_dt_cstt.pkl', 'CSTT')
+    train_dt('data/processed/data_training_csanv.csv', 'assets/decision_tree/model_dt_csanv.pkl', 'CSANV')
 
-    # 2. Support Vector Machine (SVM)
-    print("\n" + "#" * 75)
-    print(" MODEL 2: SUPPORT VECTOR MACHINE (SVM) ".center(75, '#'))
-    print("#" * 75 + "\n")
-    train_model_svm()
-    evaluate_model_svm()
+    # 3. Training SVM (3 Varian)
+    train_svm('data/processed/data_training_ori.csv', 'assets/svm/model_svm_ori.pkl', 'ORI')
+    train_svm('data/processed/data_training_cstt.csv', 'assets/svm/model_svm_cstt.pkl', 'CSTT')
+    train_svm('data/processed/data_training_csanv.csv', 'assets/svm/model_svm_csanv.pkl', 'CSANV')
 
-    # 3. Naïve Bayes
-    print("\n" + "#" * 75)
-    print(" MODEL 3: NAÏVE BAYES ".center(75, '#'))
-    print("#" * 75 + "\n")
-    train_naive_bayes()
-    evaluate_naive_bayes()
+    # 4. Training Naive Bayes (3 Varian)
+    train_nb('data/processed/data_training_ori.csv', 'assets/naive_bayes/model_nb_ori.pkl', 'ORI')
+    train_nb('data/processed/data_training_cstt.csv', 'assets/naive_bayes/model_nb_cstt.pkl', 'CSTT')
+    train_nb('data/processed/data_training_csanv.csv', 'assets/naive_bayes/model_nb_csanv.pkl', 'CSANV')
 
-    # --------------------------------------------------------------------------
-    # FASE 3: PERBANDINGAN VISUAL ANTAR MODEL
-    # --------------------------------------------------------------------------
-    print("\n" + "#" * 75)
-    print(" PERBANDINGAN MODEL: DT vs SVM vs NAÏVE BAYES ".center(75, '#'))
-    print("#" * 75 + "\n")
+    # 5. Evaluasi & Comparison
     run_comparison()
 
-    print("=" * 75)
-    print("ALL PIPELINE STAGES COMPLETED SUCCESSFULLY!".center(75))
-    print("=" * 75)
+if __name__ == '__main__':
+    main()

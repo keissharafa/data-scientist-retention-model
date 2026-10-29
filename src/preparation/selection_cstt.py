@@ -1,13 +1,13 @@
 import os
 import json
 import pandas as pd
-from scipy.stats import chi2_contingency, ttest_ind, f_oneway
+from scipy.stats import chi2_contingency, ttest_ind
 
-def run_feature_selection(X_train, X_test, y_train, y_test):
+def run_selection_ttest(X_train, X_test, y_train, y_test):
     # ==============================================================================
-    # STEP 4: SELEKSI FITUR (MENGHASILKAN DATA T-TEST & ANOVA)
+    # STEP 4: SELEKSI FITUR (CHI-SQUARE + T-TEST)
     # ==============================================================================
-    print("=== STEP 4: SELEKSI FITUR ===")
+    print("=== STEP 4: SELEKSI FITUR (CHI-SQUARE + T-TEST) ===")
 
     kolom_kategori = [col for col in X_train.columns if X_train[col].nunique() < 15]
     kolom_numerik = [col for col in X_train.columns if col not in kolom_kategori]
@@ -34,45 +34,25 @@ def run_feature_selection(X_train, X_test, y_train, y_test):
             fitur_num_ttest.append(col)
             print(f"[Keep] {col} (p-value: {p:.4f}) -> Signifikan")
 
-    # --- 4.3 ANOVA untuk Data Numerik ---
-    print("\n--- Uji ANOVA (Data Numerik) ---")
-    fitur_num_anova = []
-    for col in kolom_numerik:
-        grup_0 = X_train[y_train == 0][col]
-        grup_1 = X_train[y_train == 1][col]
-        stat, p = f_oneway(grup_0, grup_1)
-        if p < 0.05:
-            fitur_num_anova.append(col)
-            print(f"[Keep] {col} (p-value: {p:.4f}) -> Signifikan")
-
-    # --- 4.4 Gabung Fitur dan Ekspor ---
+    # --- 4.3 Gabung Fitur dan Ekspor ---
     os.makedirs('data/processed', exist_ok=True)
-    
-    # Dataset 1: CS + T-Test
+    os.makedirs('assets', exist_ok=True)
+
     fitur_cstt = fitur_cat_terpilih + fitur_num_ttest
     train_cstt = pd.concat([X_train[fitur_cstt], y_train], axis=1)
     test_cstt = pd.concat([X_test[fitur_cstt], y_test], axis=1)
+
+    # Ekspor dataset CSTT
     train_cstt.to_csv('data/processed/data_training_cstt.csv', index=False)
     test_cstt.to_csv('data/processed/data_testing_cstt.csv', index=False)
 
-    # Dataset 2: CS + ANOVA
-    fitur_csanv = fitur_cat_terpilih + fitur_num_anova
-    train_csanv = pd.concat([X_train[fitur_csanv], y_train], axis=1)
-    test_csanv = pd.concat([X_test[fitur_csanv], y_test], axis=1)
-    train_csanv.to_csv('data/processed/data_training_csanv.csv', index=False)
-    test_csanv.to_csv('data/processed/data_testing_csanv.csv', index=False)
-
     # Simpan log fitur untuk laporan
-    os.makedirs('assets', exist_ok=True)
     with open('assets/selected_features_cstt.json', 'w') as f:
         json.dump(fitur_cstt, f, indent=4)
-    with open('assets/selected_features_csanv.json', 'w') as f:
-        json.dump(fitur_csanv, f, indent=4)
 
-    print("\nSTATUS: File dataset CSTT (T-test) dan CSANV (ANOVA) berhasil diekspor!\n")
+    print("\nSTATUS: File dataset CSTT (T-test) berhasil diekspor!\n")
 
-    # Kembalikan salah satu dataset agar tidak error di main pipeline
-    return train_csanv, test_csanv
+    return train_cstt, test_cstt
 
 if __name__ == '__main__':
     pass

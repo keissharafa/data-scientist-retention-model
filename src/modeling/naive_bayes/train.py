@@ -3,11 +3,18 @@ import pickle
 import pandas as pd
 from sklearn.naive_bayes import GaussianNB
 
-def train_naive_bayes(train_csv='data/processed/data_training_siap.csv'):
-    print("=== STEP 5 (NB): NAÏVE BAYES TRAINING ===")
+def train_naive_bayes(
+    train_csv='data/processed/data_training_ori.csv',
+    model_output_path='assets/naive_bayes/model_nb_ori.pkl',
+    variant_label='ORI'
+):
+    # ==============================================================================
+    # STEP 5: PEMODELAN NAÏVE BAYES
+    # ==============================================================================
+    print(f"=== STEP 5: NAÏVE BAYES TRAINING ({variant_label}) ===")
 
     if not os.path.exists(train_csv):
-        raise FileNotFoundError(f"File {train_csv} tidak ditemukan! Pastikan data siap pakai sudah ada.")
+        raise FileNotFoundError(f"File {train_csv} tidak ditemukan! Jalankan modul preparation terlebih dahulu.")
 
     # Membaca data training
     df_train = pd.read_csv(train_csv)
@@ -18,15 +25,18 @@ def train_naive_bayes(train_csv='data/processed/data_training_siap.csv'):
     nb_model = GaussianNB()
     nb_model.fit(X_train, y_train)
 
-    print("STATUS: Pemodelan Naïve Bayes selesai dilatih.")
+    print(f"STATUS: Pemodelan Naïve Bayes ({variant_label}) selesai dilatih.")
 
-    # menyimpan hasil model 
-    os.makedirs('assets', exist_ok=True)
-    with open('assets/naive_bayes_model.pkl', 'wb') as f:
+    # Menyimpan hasil model
+    os.makedirs(os.path.dirname(model_output_path), exist_ok=True)
+    with open(model_output_path, 'wb') as f:
         pickle.dump(nb_model, f)
 
-    print("STATUS: Model disimpan di 'assets/naive_bayes_model.pkl'.\n")
+    print(f"STATUS: Model disimpan di '{model_output_path}'.\n")
     return nb_model
 
 if __name__ == '__main__':
-    train_naive_bayes()
+    # Melatih 3 Varian Data
+    train_naive_bayes('data/processed/data_training_ori.csv', 'assets/naive_bayes/model_nb_ori.pkl', 'ORI')
+    train_naive_bayes('data/processed/data_training_cstt.csv', 'assets/naive_bayes/model_nb_cstt.pkl', 'CSTT')
+    train_naive_bayes('data/processed/data_training_csanv.csv', 'assets/naive_bayes/model_nb_csanv.pkl', 'CSANV')
