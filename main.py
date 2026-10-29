@@ -18,13 +18,22 @@ from src.modeling.naive_bayes.evaluate import evaluate_naive_bayes
 # 4. Perbandingan visual antar model
 from src.modeling.comparison import run_comparison
 
+# 5. Baseline ORI (12 Fitur Utuh tanpa seleksi)
+from src.modeling.baseline_ori import run_baseline_ori
+
 if __name__ == '__main__':
+    # --------------------------------------------------------------------------
+    # EVALUASI BASELINE (VERSI ORI - 12 FITUR)
+    # --------------------------------------------------------------------------
+    run_baseline_ori()
+    print("\n" + "="*75 + "\n")
+
     print("=" * 75)
-    print("RUNNING END-TO-END MACHINE LEARNING PIPELINE".center(75))
+    print("RUNNING END-TO-END MACHINE LEARNING PIPELINE (MODUL 8)".center(75))
     print("=" * 75 + "\n")
 
     # --------------------------------------------------------------------------
-    # FASE 1: PREPARATION & PREPROCESSING DATA
+    # PREPARATION & PREPROCESSING DATA
     # --------------------------------------------------------------------------
     run_preprocessing()
     X_train, X_test, y_train, y_test = run_splitting()
@@ -32,7 +41,7 @@ if __name__ == '__main__':
     run_feature_selection(X_train_scaled, X_test_scaled, y_train, y_test)
 
     # --------------------------------------------------------------------------
-    # FASE 2: MODELING & EVALUASI BENCHMARK
+    # MODELING & EVALUASI BENCHMARK
     # --------------------------------------------------------------------------
     # 1. Decision Tree
     print("\n" + "#" * 75)
@@ -56,7 +65,7 @@ if __name__ == '__main__':
     evaluate_naive_bayes()
 
     # --------------------------------------------------------------------------
-    # FASE 3: PERBANDINGAN VISUAL ANTAR MODEL
+    # PERBANDINGAN VISUAL ANTAR MODEL
     # --------------------------------------------------------------------------
     print("\n" + "#" * 75)
     print(" PERBANDINGAN MODEL: DT vs SVM vs NAÏVE BAYES ".center(75, '#'))
