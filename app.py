@@ -386,18 +386,15 @@ def load_artifacts():
         
     return model, scaler, encoders
 
-# --- MAPPING TEKS MENTAH ---
+# --- MAPPING TEKS MENTAH (Hanya 9 Fitur Terpilih) ---
 OPTIONS = {
     "city": [f"city_{i}" for i in [103, 40, 21, 115, 162, 176, 160, 46, 61, 114, 13, 159, 102, 67, 100, 16, 71, 104, 64, 101, 83, 105, 73, 75, 41, 11, 93, 90, 36, 20, 57, 152, 19, 65, 74, 173, 136, 98, 97, 50, 138, 82, 157, 89, 150, 70, 175, 94, 28, 59, 165, 145, 142, 26, 12, 37, 43, 116, 23, 99, 149, 10, 45, 80, 128, 158, 123, 7, 72, 106, 143, 78, 109, 24, 134, 48, 144, 91, 146, 133, 126, 118, 9, 167, 27, 84, 54, 39, 79, 76, 77, 81, 131, 44, 117, 155, 33, 141, 127, 62, 53, 25, 2, 69, 120, 111, 30, 1, 140, 179, 55, 14, 42, 107, 18, 139, 180, 166, 121, 129, 8, 31, 171]],
     "company_size": ["<10", "10/49", "50-99", "100-500", "500-999", "1000-4999", "5000-9999", "10000+"],
     "company_type": ["Pvt Ltd", "Funded Startup", "Early Stage Startup", "Other", "Public Sector", "NGO"],
-    "gender": ["Male", "Female", "Other"],
     "enrolled_university": ["no_enrollment", "Full time course", "Part time course"],
     "education_level": ["Graduate", "Masters", "High School", "Phd", "Primary School"],
     "relevent_experience": ["Has relevent experience", "No relevent experience"],
-    "last_new_job": ["1", "2", "3", "4", ">4", "never"],
-    "experience": ["<1", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", ">20"],
-    "major_discipline": ["STEM", "Humanities", "Other", "Business Degree", "Arts", "No Major"]
+    "last_new_job": ["1", "2", "3", "4", ">4", "never"]
 }
 
 # --- VISUALISASI PERBANDINGAN MODEL ---
@@ -445,7 +442,7 @@ RESULT_ICONS = {
 }
 
 def render_result_card(kind, title, description):
-    # HTML sengaja dibuat satu baris tanpa indentasi supaya tidak dibaca sebagai code block oleh markdown
+    # HTML sengaja dibuat satu baris tanpa indentasi
     return (
         f'<div class="result-card result-card--{kind}">'
         f'<div class="result-card__icon">{RESULT_ICONS[kind]}</div>'
@@ -455,17 +452,7 @@ def render_result_card(kind, title, description):
         f'</div></div>'
     )
 
-# --- RINGKASAN HASIL (rule-based dari input kandidat) ---
-def _experience_to_years(value):
-    if value == "<1":
-        return 0
-    if value == ">20":
-        return 21
-    try:
-        return int(value)
-    except ValueError:
-        return None
-
+# --- RINGKASAN HASIL (Hanya Menggunakan 9 Fitur Tersisa) ---
 def profile_signals(d):
     """Mengembalikan (faktor_pendukung_bertahan, faktor_risiko_pindah) dari profil input."""
     stable, risk = [], []
@@ -483,13 +470,6 @@ def profile_signals(d):
 
     if d["enrolled_university"] == "Full time course":
         risk.append("sedang menempuh kuliah penuh waktu")
-
-    years = _experience_to_years(d["experience"])
-    if years is not None:
-        if years >= 10:
-            stable.append("pengalaman kerja panjang")
-        elif years <= 2:
-            risk.append("pengalaman kerja masih singkat")
 
     return stable, risk
 
@@ -514,7 +494,7 @@ def build_result_copy(will_leave, leave_prob, d):
 
 # --- TABEL PROFIL (gaya Team Members) ---
 def render_profile_table(data):
-    # HTML satu baris tanpa indentasi supaya tidak dibaca sebagai code block oleh markdown
+    # HTML satu baris tanpa indentasi
     head = "".join(f"<th>{html.escape(str(k))}</th>" for k in data.keys())
     cells = "".join(f"<td>{html.escape(str(v))}</td>" for v in data.values())
     return (
@@ -526,7 +506,7 @@ def render_profile_table(data):
 
 # --- PROGRESS CARD (tab Model Progress) ---
 def render_progress_card(items):
-    # HTML satu baris tanpa indentasi supaya tidak dibaca sebagai code block oleh markdown
+    # HTML satu baris tanpa indentasi
     rows = "".join(
         '<div class="pg-row">'
         f'<div class="pg-head"><div class="pg-name">{html.escape(name)}</div>'
@@ -565,54 +545,69 @@ def main():
             
             with col1:
                 st.markdown('<div class="section-title">Demographics & Company</div>', unsafe_allow_html=True)
-                city_development_index = st.slider("City Development Index", 0.0, 1.0, 0.8, help="Skor indeks perkembangan infrastruktur dan ekonomi dari kota domisili kandidat. Nilai mendekati 1.0 menunjukkan kota sangat maju.")
-                training_hours = st.number_input("Training Hours", min_value=1, max_value=500, value=50, help="Total jam pelatihan sertifikasi atau data science yang telah diselesaikan oleh kandidat.")
+                city_development_index = st.slider("City Development Index", 0.0, 1.0, 0.8, help="Skor indeks perkembangan infrastruktur dan ekonomi dari kota domisili kandidat.")
+                training_hours = st.number_input("Training Hours", min_value=1, max_value=500, value=50, help="Total jam pelatihan sertifikasi/data science yang diselesaikan kandidat.")
                 city = st.selectbox("City", OPTIONS["city"], help="Kode area kota asal/domisili kandidat saat ini.")
-                company_size = st.selectbox("Company Size", OPTIONS["company_size"], help="Estimasi jumlah total karyawan di perusahaan tempat kandidat bekerja saat ini.")
-                company_type = st.selectbox("Company Type", OPTIONS["company_type"], help="Jenis badan usaha dari perusahaan kandidat (Pvt Ltd = Private Limited Company).")
-                gender = st.selectbox("Gender", OPTIONS["gender"], help="Identitas gender kandidat.")
+                company_size = st.selectbox("Company Size", OPTIONS["company_size"], help="Estimasi jumlah total karyawan di perusahaan kandidat saat ini.")
+                company_type = st.selectbox("Company Type", OPTIONS["company_type"], help="Jenis badan usaha dari perusahaan kandidat.")
                 
             with col2:
                 st.markdown('<div class="section-title">Experience & Education</div>', unsafe_allow_html=True)
-                enrolled_university = st.selectbox("Enrolled University", OPTIONS["enrolled_university"], help="Status pendidikan kandidat saat ini. Pilih 'no_enrollment' jika tidak sedang mengambil kuliah/kursus penuh waktu.")
-                education_level = st.selectbox("Education Level", OPTIONS["education_level"], help="Jenjang pendidikan formal tertinggi yang telah diselesaikan.")
-                relevent_experience = st.selectbox("Relevant Experience", OPTIONS["relevent_experience"], help="Apakah kandidat memiliki pengalaman kerja profesional yang relevan di bidang Data Science/Analytics.")
-                last_new_job = st.selectbox("Last New Job", OPTIONS["last_new_job"], help="Selisih waktu (dalam tahun) sejak kandidat pindah dari pekerjaan sebelumnya ke pekerjaan yang sekarang.")
-                experience = st.selectbox("Years of Experience", OPTIONS["experience"], help="Total pengalaman kerja profesional kandidat dalam hitungan tahun.")
-                major_discipline = st.selectbox("Major Discipline", OPTIONS["major_discipline"], help="Bidang studi utama saat kuliah (STEM = Science, Technology, Engineering, Mathematics).")
-
+                enrolled_university = st.selectbox("Enrolled University", OPTIONS["enrolled_university"], help="Status pendidikan kandidat saat ini.")
+                education_level = st.selectbox("Education Level", OPTIONS["education_level"], help="Jenjang pendidikan formal tertinggi yang diselesaikan.")
+                relevent_experience = st.selectbox("Relevant Experience", OPTIONS["relevent_experience"], help="Apakah kandidat memiliki pengalaman profesional di bidang Data Science/Analytics.")
+                last_new_job = st.selectbox("Last New Job", OPTIONS["last_new_job"], help="Selisih waktu (tahun) sejak pindah dari pekerjaan sebelumnya ke sekarang.")
+                
             st.write("") 
             submitted = st.form_submit_button("Analyze Candidate", use_container_width=True)
 
         if submitted:
             input_dict = {
-                "city_development_index": city_development_index, "training_hours": training_hours,
-                "city": city, "company_size": company_size, "company_type": company_type, "gender": gender,
-                "enrolled_university": enrolled_university, "education_level": education_level,
-                "relevent_experience": relevent_experience, "last_new_job": last_new_job,
-                "experience": experience, "major_discipline": major_discipline
+                "city_development_index": city_development_index, 
+                "training_hours": training_hours,
+                "city": city, 
+                "company_size": company_size, 
+                "company_type": company_type, 
+                "enrolled_university": enrolled_university, 
+                "education_level": education_level,
+                "relevent_experience": relevent_experience, 
+                "last_new_job": last_new_job
             }
             input_df = pd.DataFrame([input_dict])
             
             try:
                 categorical_cols = [
-                    "city", "company_size", "company_type", "gender", 
-                    "enrolled_university", "education_level", "relevent_experience", 
-                    "last_new_job", "experience", "major_discipline"
+                    "city", "company_size", "company_type", 
+                    "enrolled_university", "education_level", 
+                    "relevent_experience", "last_new_job"
                 ]
+                
+                # Mengubah teks mentah menjadi angka berdasar label encoder dari training
                 for col in categorical_cols:
                     val = str(input_df[col].iloc[0])
                     encoded_val = None
                     if col in encoders and hasattr(encoders[col], 'transform'):
                         try: encoded_val = encoders[col].transform([val])[0]
                         except: pass
-                    if encoded_val is None: encoded_val = string_encoders[col].transform([val])[0]
+                    if encoded_val is None: 
+                        encoded_val = string_encoders[col].transform([val])[0]
                     input_df[col] = encoded_val
-                    
+                
+                # Scale fitur agar sejajar dengan yang di-*training*
+                # Catatan: scaler butuh struktur kolom utuh (12 kolom) sesuai saat dia fit.
+                # Karena input kita kurang 3 kolom ('gender', 'experience', 'major_discipline'),
+                # kita harus inject angka dummy khusus untuk scaling, lalu membuangnya lagi.
+                
+                # Masukkan kolom dummy agar scaler.transform() tidak error
+                input_df['gender'] = 0
+                input_df['experience'] = 0
+                input_df['major_discipline'] = 0
+                
                 input_df = input_df[scaler.feature_names_in_]
                 input_scaled = scaler.transform(input_df)
                 input_scaled_df = pd.DataFrame(input_scaled, columns=scaler.feature_names_in_)
                 
+                # Ambil HANYA 9 fitur seleksi untuk diprediksi oleh Model Final
                 selected_features = [
                     "relevent_experience", "enrolled_university", "education_level", 
                     "company_size", "company_type", "last_new_job", "city", 
@@ -620,6 +615,7 @@ def main():
                 ]
                 final_input = input_scaled_df[selected_features]
                 
+                # Eksekusi Prediksi
                 prediction = model.predict(final_input)
                 will_leave = prediction[0] == 1
 
@@ -645,7 +641,7 @@ def main():
                     st.markdown(render_profile_table(input_dict), unsafe_allow_html=True)
 
             except Exception as e:
-                st.error(f"Terjadi kesalahan pemrosesan: {e}")
+                st.error(f"Terjadi kesalahan pemrosesan model: {e}")
 
     with tab2:
         st.subheader("Perbandingan Model: Decision Tree vs SVM vs Naïve Bayes")
